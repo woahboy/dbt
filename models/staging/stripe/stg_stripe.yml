@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: stg_stripe__payments
+    description: Staged payment data from our stripe app.
+    columns:
+      - name: payment_method
+        description: "{{ doc('payment_method')}}"
