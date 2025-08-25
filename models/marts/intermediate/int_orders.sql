@@ -1,44 +1,40 @@
 with
 
-payments as (
-
-    select * from {{ ref('stg_stripe__payments') }}
-    where payment_status != 'fail'
-
-),
-
 orders as (
 
     select * from {{ ref('stg_jaffle_shop__orders') }}
 
 ),
 
-order_totals as (
+payments as (
 
-    select
-
-        order_id,
-        payment_status,
-        sum(payment_amount) as order_value_dollars
-
-    from payments
-    group by 1, 2
+    select * from {{ ref('stg_stripe__payments') }}
 
 ),
 
-order_values_joined as (
+completed_payments as(
 
-    select
+    select 
+        order_id, 
+        max(payment_created_at) as payment_finalized_date, 
+        sum(payment_amount) / 100.0 as total_amount_paid
+    from payments
+    where payment_status <> 'fail'
+    group by 1
 
-        orders.*,
-        orders.user_id as customer_id,
-        order_totals.payment_status,
-        order_totals.order_value_dollars
+),
 
+paid_orders as (
+
+    select 
+        orders.order_id,
+        orders.customer_id,
+        orders.order_placed_at,
+        orders.order_status,
+        completed_payments.total_amount_paid,
+        completed_payments.payment_finalized_date,
     from orders
-    left join order_totals
-        on orders.id = order_totals.order_id
-
+    left join completed_payments on orders.order_id = completed_payments.order_id
 )
 
-select * from order_values_joined
+select * from paid_orders
