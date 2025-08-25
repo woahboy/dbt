@@ -1,7 +1,5 @@
 {{ config(
-        materialized='incremental',
-        incremental_strategy='merge',
-        on_schema_change='fail'
+        materialized='table'
     )
 }}
 
@@ -26,7 +24,7 @@ final as (
 
     select 
         orders.order_id,
-        orders.customer_id,
+        orders.customer_id as customer_ids,
         orders.order_date,
         coalesce (order_payments.amount, 0) as amount
 
@@ -35,8 +33,3 @@ final as (
 )
 
 select * from final
-
-{% if is_incremental() %}
-where 
-order_date >= (select max(order_date) from {{ this }}) 
-{% endif %}
