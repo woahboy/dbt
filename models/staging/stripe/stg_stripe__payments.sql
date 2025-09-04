@@ -17,7 +17,7 @@ transformed as (
         round(amount / 100.0, 2) as payment_amount
 
     from source
-
+    where payment_amount > 0
 )
 
 select * from transformed
